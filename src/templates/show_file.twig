@@ -1,0 +1,94 @@
+{% extends "layouts/base.twig" %}
+{% block content %}
+<div  id="show-file">
+    <div class="show-file">
+
+        <div v-if="process" class="file-overlay">
+            <div class="center"><img class="file-overlay__loading" src="/images/loading.gif" alt=""></div>
+        </div>
+        <div class="show-file__preview">
+
+            <div v-if="file" class="center">
+                <div v-if="file && (file.type.split('/')[0] == 'video')">
+                    <video :src="'/'+file.filepath" controls></video>
+                </div>
+                <audio v-else-if="file && (file.type.split('/')[0] == 'audio')" controls>
+                    <source :src="'/'+file.filepath" type="audio/ogg; codecs=vorbis">
+                    <source :src="'/'+file.filepath" type="audio/mpeg">
+                    <a href="audio/music.mp3">Скачайте музыку</a>.
+                </audio>
+
+                <div v-else is="fileImage" :file="file"></div>
+            </div>
+        </div>
+
+        <div class="show-file__info">
+            <div v-if="user" class="show-file__field">
+                <div class="show-file__field-type">User:</div>
+                <span class="show-file__field-text"> [[user.name]]</span>
+            </div>
+            <div class="show-file__field">
+                <div class="show-file__field-type">Name:</div>
+                <span class="show-file__field-text" v-if="file"> [[file.name]]</span>
+            </div>
+            <div class="show-file__field">
+                <div class="show-file__field-type">Size:</div>
+                <span class="show-file__field-text" v-if="file"> <converter
+                            v-bind:size="file.size"></converter></span>
+            </div>
+            <div class="show-file__field">
+                <div class="show-file__field-type">Type:</div>
+                <span class="show-file__field-text" v-if="file"> [[file.type]]</span>
+            </div>
+            <div class="show-file__field">
+                <div class="show-file__field-type">Data:</div>
+                <span class="show-file__field-text"
+                      v-if="file"> [[new Date(file.created.date).toLocaleDateString()]]</span></div>
+
+        </div>
+        <div class="center">
+            <a :href="[[file.id+'/download']]" class="show-file__btn btn"> Download</a>
+        </div>
+    </div>
+    <comments v-if="file" v-bind:file="file"></comments>
+</div>
+{% endblock %}
+
+{% block script %}
+    {% include "partials/comments.twig" %}
+    {% include "partials/date.twig" %}
+    {% include "partials/converter.twig" %}
+    {% include "partials/image.twig" %}
+    <script>
+
+        let showFile = new Vue({
+            "el": "#show-file",
+            data: {
+                file: false,
+                process: true
+            },
+            methods: {},
+            mounted: function () {
+                path = window.location.pathname.split("/")[2] + "/search"
+                axios.get(path, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+
+                }).then(r => {
+                    this.file = r.data[0];
+                    this.user = {
+                        name: r.data.name
+                    };
+                    this.process = false;
+
+
+                })
+            }
+            , delimiters: ["[[", "]]"]
+
+        })
+
+
+    </script>
+{% endblock %}

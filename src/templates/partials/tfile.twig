@@ -1,0 +1,45 @@
+{% include "partials/date.twig" %}
+{% include "partials/image.twig" %}
+{% include "partials/converter.twig" %}
+<script>
+    Vue.component('tfile', {
+        props: ['file'],
+        data: function () {
+            return {
+                overlay: false,
+            }
+        },
+        methods: {
+            cut: function (name) {
+                if (name && name.length > 25) {
+                    return name.substr(0, 25) + "..."
+                } else {
+                    return name;
+                }
+            },
+
+
+        },
+        delimiters: ["[[", "]]"],
+        template: `      <div class="file-table__file">
+
+                    <div @click="overlay=true"  class="file-table__file-preview">
+                     <fileImage v-bind:file="file"></fileImage>
+                    </div>
+<div :class="{'overlay':overlay == false, 'overlay--active':overlay}">
+
+<div class="overlay__inner">
+<div class="overlay__preview">
+    <fileImage v-bind:file="file"></fileImage>
+<div @click="overlay = false" class="cancel"><span class="cancel-span"></span></div>
+</div>
+
+</div>
+</div>
+                   <div class="file-table__file-item" :title="file.name"> <a class="file-table__file-link" :href="[['/file/'+file.id]]">[[cut(file.name)]]</a></div>
+                    <div class="file-table__file-item"><converter v-bind:size="file.size"></converter></div>
+                    <div class="file-table__file-item"><date v-bind:date="file.created.date"></date></div>
+                </div>`
+    })
+    ;
+</script>

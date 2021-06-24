@@ -1,0 +1,87 @@
+{% extends "layouts/base.twig" %}
+
+
+
+
+{% block content %}
+
+    <form id="login" class="form form__login">
+
+        <div class="form__header">
+            <h3 class="form__header-text">
+                Sign in
+            </h3>
+        </div>
+        <div class="form__body ">
+            <div class="form__field">
+                <label class="form__field-label" for="email">
+                    <input id="email" class="form__field-input" name="email" v-model="email" type="text" required>
+                    <span class="form__field-placeholder">email</span>
+                </label>
+            </div>
+            <div v-if="errors && errors.email" class="field-error__auth">
+                <p v-if="errors.email.blank" class="field-error__error-text">[[errors.email.blank ]]</p>
+                <p v-if="errors.email.email" class="field-error__error-text">[[errors.email.email]]</p>
+            </div>
+            <div class="form__field">
+                <label class="form__field-label" for="password">
+                    <input id="password" class="form__field-input" name="name" v-model="password" type="password" required>
+                    <span class="form__field-placeholder">password</span>
+                </label>
+            </div>
+            <div v-if="errors && errors.password" class="field-error__auth">
+                <p v-if="errors.password.blank" class="field-error__error-text">[[errors.password.blank ]]</p>
+                <p v-if="errors.password.lengthMin" class="field-error__error-text">[[errors.password.lengthMin ]]</p>
+                <p v-if="errors.password.lengthMax" class="field-error__error-text">[[errors.password.lengthMax ]]</p>
+            </div>
+            <div class="center">
+                <div v-on:click="send" class="btn form__btn">submit</div>
+            </div>
+        </div>
+        {% include "partials/csrf.twig" %}
+    </form>
+{% endblock %}
+{% block script %}
+
+    <script>
+
+        let form = new Vue({
+            el: "#login",
+            data: {
+                email: null,
+                password: null,
+                errors:null,
+            },
+            methods: {
+                send: function () {
+
+                    let form = new FormData();
+                    if(this.email)form.append("email", this.email);
+                    if(this.password)form.append("password", this.password);
+                    form.append("csrf_token", document.getElementById("csrf").value)
+                    axios.post("/login/send", form, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+
+                        }
+                    })
+                        .then((response) => {
+                            if (!response.data.hasOwnProperty("errors")) {
+                                window.location.href = "/profile";
+                            } else {
+
+                                this.errors = response.data.errors;
+                                console.log(this.errors)
+
+                            }
+                        });
+
+
+                }
+            },
+            delimiters:["[[","]]"]
+        })
+    </script>
+{% endblock %}

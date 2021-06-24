@@ -1,0 +1,52 @@
+<script>
+    Vue.component('pagination', {
+        props: ['items','pages'],
+        data: function () {
+            return {
+                currentPage:1
+            }
+        },
+        methods: {
+            prevPage:function (){
+                if (this.currentPage<=0){
+                    return false;
+                }else{
+
+                    return  this.currentPage - 1;
+                }
+            },
+            nextPage:function (){
+                if (this.currentPage>=this.pages){
+
+                    return false;
+                }else{
+                    return this.currentPage+1;
+                }
+            }
+        }
+        , delimiters: ["[[", "]]"]
+        ,
+        template: `
+<div v-if="pages>1" class="pagination">
+    <div @click="[$emit('switchpage',prevPage()) , currentPage--]" v-if="prevPage()"   class="pagination__item">
+        <span href="page" class="pagination__item-index">
+       [[prevPage()]]
+        </span>
+    </div>
+    <div class="pagination__item">
+        <span  class="pagination__item-index">
+[[currentPage]]
+        </span>
+    </div>
+    <div  v-if="nextPage()" @click="[$emit('switchpage',nextPage()), currentPage++]" class="pagination__item">
+        <span  class="pagination__item-index">
+[[nextPage()]]
+        </span>
+    </div>
+
+</div>
+                    `
+
+
+    })
+</script>

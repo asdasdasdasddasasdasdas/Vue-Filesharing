@@ -1,0 +1,170 @@
+
+
+<script>
+    Vue.component('comment', {
+        props: ["comment", "user"],
+        mounted: function () {
+            this.countChildren();
+        }
+        ,
+        data: function () {
+            return {
+                process: false,
+                replying: false,
+                content: "",
+                replies: false,
+                replies_count: 0,
+                view_replies: false,
+                amount: 0,
+                empty: false
+
+            }
+        }
+        ,
+        methods: {
+            countChildren: function () {
+
+                axios.get("/comment/" + this.comment.id + "/count", {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }).then(r => {
+                    this.replies_count = r.data;
+
+                })
+            },
+            addChildComment: function () {
+                if (this.process) {
+                    return;
+                }
+                this.process = true;
+
+                fd = new FormData();
+                fd.append("parent_id", this.comment.id)
+                fd.append("comment", this.content);
+                fd.append("csrf_token", document.getElementById("csrf").value)
+                axios.post("/comment/post", fd, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }).then(r => {
+                    console.log(r.data)
+                    if (Array.isArray(r.data)) {
+                        if (this.replies == false) this.replies = r.data;
+                        else this.replies = r.data.concat(this.replies);
+                        this.amount+=1;
+                        this.empty = false
+                        this.countChildren();
+                        if (this.replies_count == this.amount){
+                            this.empty=true;
+                        }
+                    }
+                    this.process = false;
+                })
+            }
+            ,
+            viewReplies: function () {
+                if (this.replies == false) {
+                    this.getChildrenComments();
+                    this.view_replies = true;
+                } else {
+                    this.view_replies = !this.view_replies;
+                }
+            }
+            ,
+            getChildrenComments: function () {
+
+                if (this.replies_count == this.amount || this.empty) {
+
+                    return
+                }
+                console.log(this.view_replies)
+                let query = "?amount=" + this.amount;
+                let path = "/comment/" + this.comment.id + "/childComments" + query;
+                axios.get(path, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }).then(r => {
+                    if (r.data == false) {
+                        this.empty = true;
+                    }
+                    if (this.replies == false) this.replies = r.data;
+                    else this.replies = r.data.concat(this.replies);
+                    this.amount += r.data.length;
+                    if (this.amount == this.replies_count) this.empty = true;
+
+                })
+            }
+        }
+        ,
+        delimiters: ["[[", "]]"],
+        template: `<div v-if="comment != undefined">
+    <div class="comment__field">
+        <div class="comment__preview">
+
+            <img v-if="user.avatarPath == null" class="comment__preview-avatar"
+                 src="/images/unknown-person-icon-4.png" alt="">
+            <div class="comment__preview-inner">
+
+                <img v-if="user.avatarPath != null" class="comment__preview-avatar"
+                     :src="'/'+user.avatarPath">
+            </div>
+        </div>
+        <div class="comment__content">
+            <div class="comment__user"><a href="" class="comment__user-link">[[user.name]]</a>
+                <date class="comment__date" v-bind:date="comment.created.date"></date>
+            </div>
+            <div class="comment__text"><p>[[comment.content]]</p></div>
+        </div>
+
+    </div>
+
+    <div class="comment__form">
+        <div v-on:click="replying = !replying" class="comment__form-left">
+            <span class="comment__form-text">Reply</span>
+        </div>
+        <div v-if="replying" class="comment__form-right"><textarea v-model="content" required
+                                                                   class="comment__form-textarea" name="" id=""
+                                                                   cols="30" rows="1"></textarea>
+            <button @click="addChildComment" class="comment__form-btn btn">Send</button>
+        </div>
+    </div>
+    <div v-if="replies_count !=0" class="comment__replies">
+        <div class="comment__replies-header" @click="viewReplies"><i
+                    v-bind:class="{'comment__angledown':view_replies==false, 'comment__angledown_active':view_replies}"
+                    aria-hidden="true"></i><span class="comment__replies-view">View  [[replies_count]] replies</span>
+        </div>
+        <div v-if="replies && view_replies" class="comment__replies-list">
+            <div v-for="(reply,i) in replies"
+                 v-bind:key="i" class="comment__reply">
+                <div class="comment__field">
+                    <div class="comment__preview">
+
+                        <img v-if="reply.avatarPath == null" class="comment__preview-avatar"
+                             src="/images/unknown-person-icon-4.png" alt="">
+                        <div class="comment__preview-inner">
+
+                            <img v-if="reply.avatarPath != null" class="comment__preview-avatar"
+                                 :src="'/'+reply.avatarPath">
+                        </div>
+                    </div>
+                    <div class="comment__content">
+                        <div class="comment__user"><a href="" class="comment__user-link">[[reply.name]]</a>
+                            <date class="comment__date" v-bind:date="reply[0].created.date"></date>
+                        </div>
+                        <div class="comment__text"><p>[[reply[0].content]]</p></div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div v-if="!empty || this.replies_count == this.amount" v-on:click="getChildrenComments" class="comment__replies-more">
+                More comments
+            </div>
+        </div>
+    </div>
+</div>
+        `
+    })
+</script>

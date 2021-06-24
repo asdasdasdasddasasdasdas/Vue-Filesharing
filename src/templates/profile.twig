@@ -1,0 +1,159 @@
+{% extends "layouts/base.twig" %}
+{% block content %}
+<div id="profile" class="profile-view">
+
+
+    <div id="profile" class="profile-view__left">
+        <div class="profile-view__left-content">
+            <div v-if="user" class="profile-view__avatar-preview">
+                <img v-if="user.avatarPath==null" src="/images/unknown-person-icon-4.png" alt="" class="profile-view__avatar-unknown">
+
+                <div class="profile-view__avatar-content">
+                <img :src="[[getAvatar()]]" class="profile-view__avatar" alt="">
+                </div>
+            </div>
+            <label for="avatar-upload"   class="profile-view__btn btn ">upload avatar</label>
+            <input id="avatar-upload" v-on:change="addAvatar" class="profile-view__avatar-upload" type="file">
+        </div>
+    </div>
+    <div class="profile-view__right">
+        <div class="profile-view__header">
+            <h3 class="profile-view__header-text center">profile</h3>
+        </div>
+        <div class="profile-view__right-content">
+
+            <div  v-if="user" class="profile-view__field">
+                 <div class="profile-view__field-content">
+                <input id="profile-name" required class="profile-view__field-input" v-model="user.name">
+                <label for="profile-name" class="profile-view__label-input" for="">Name </label>
+                 </div>
+            </div>
+            <div v-if="errors && errors.name" class="field-error__profile">
+
+                <p v-if="errors.name.blank" class="field-error__error-text">[[errors.name.blank]]</p>
+                <p v-if="errors.name.lengthMin" class="field-error__error-text">[[errors.name.lengthMin]]</p>
+                <p v-if="errors.name.lengthMax" class="field-error__error-text">[[errors.name.lengthMax]]</p>
+            </div>
+            <div class="profile-view__field">
+                <div  v-if="user" class="profile-view__field-content">
+                    <input type="password" id="profile-password" required class="profile-view__field-input" v-model="user.password">
+                    <label for="profile-password" class="profile-view__label-input" for="">Password </label>
+                </div>
+            </div>
+            <div v-if="errors && errors.password" class="field-error">
+                <p v-if="errors.password.blank" class="field-error__error-text">[[errors.password.blank ]]</p>
+                <p v-if="errors.password.lengthMin" class="field-error__error-text">[[errors.password.lengthMin]]</p>
+                <p v-if="errors.password.lengthMax" class="field-error__error-text">[[errors.password.lengthMax]]</p>
+            </div>
+            <div  v-if="user" class="profile-view__field">
+                    <div class="profile-view__field-content">
+                <label class="profile-view__label" for="">Login: </label>
+                <div required class="profile-view__field-text" > [[user.login]]</div>
+                    </div>
+            </div>
+            <div v-if="user" class="profile-view__field">
+                    <div class="profile-view__field-content">
+                <label class="profile-view__label" for="">Created at: </label>
+                <span class="profile-view__field-text">[[ new Date(user.created.date).toLocaleDateString() ]]</span>
+                    </div>
+            </div>
+
+            <div v-if="user.updated!=null"  class="profile-view__field">
+                <div class="profile-view__field-content">
+                    <label class="profile-view__label" for="">Updated at: </label>
+                <span class="profile-view__field-text">[[ new Date(user.updated.date).toLocaleDateString() ]]</span>
+                </div>
+            </div>
+
+               <div class="center">
+                   <button v-on:click="updateUser" class="profile-view__btn-send btn">send</button>
+               </div>
+        </div>
+    </div>
+    {% include "partials/csrf.twig" %}
+</div>
+{% endblock %}
+{% block script%}
+    <script>
+        let profile = new Vue({
+            el : "#profile",
+            data:{
+                avatar: false,
+                user: false,
+                errors: false
+            },
+            methods:{
+                addAvatar: function (e){
+
+                    if (t == "image/png" || t == "image/jpeg" || t=="image/jpg"){
+                    let reader = new FileReader();
+                    let avatar = e.target.files.item(0);
+                    let t = avatar.type;
+                    this.avatar = avatar;
+                    this.user.avatarPath = avatar;
+                    let img = new Image();
+                    let h
+                    img.src = window.webkitURL.createObjectURL(avatar);
+
+
+
+
+                        reader.onload = function () {
+
+                            this.user.avatarPath = reader.result;
+
+                        }.bind(this)
+                        reader.readAsDataURL(this.avatar);
+                        return;
+
+                    }
+
+                },
+                getAvatar:function (){
+                    if (this.user){
+                        return this.user.avatarPath;
+                    }
+                }
+                ,
+                updateUser:function (){
+                    fd = new FormData;
+                    fd.append("name",this.user.name)
+                    fd.append("avatar",this.avatar)
+                    fd.append("password", this.user.password)
+                    fd.append("csrf_token", document.getElementById("csrf").value)
+                    axios.post("/profile/update", fd,{
+                        headers: {
+                            'Content-Type': 'application/json',
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+
+                    }).then((response)=>{
+                        if (!response.data.hasOwnProperty("errors")) {
+                            window.location.href = "/profile";
+                        } else {
+                            this.errors = response.data.errors
+
+                        }
+                    })
+                }
+            }
+            ,
+            mounted: function () {
+
+                axios.get("/user/getAuthUser", {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+
+                }).then(r => {
+
+
+                    this.user = r.data[0];
+
+
+                })
+            },
+            delimiters:["[[","]]"]
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,50 @@
+<script>
+    Vue.component('date', {
+        props: ['date'],
+        methods: {
+            transformDate: function () {
+
+                let serverTimezoneOffset = -180;
+                let now = new Date()
+                let diffOffset = serverTimezoneOffset - now.getTimezoneOffset()
+                let newdate = new Date(+(new Date(this.date)) + diffOffset * 1000 * 60)
+                diff = (+now - (+newdate)) / 1000;
+                if (diff <= 60) {
+                    time = Math.round(diff);
+                    return time <= 1 ? time + " second" : time + " seconds";
+                }
+
+                if (diff <= 60 * 60) {
+                    time = Math.round(diff / 60);
+                    return time <= 1 ? time + " minute" : time + " minutes";
+                }
+
+                if (diff <= (60 * 60 * 24)) {
+                    time = Math.round(diff / (60 * 60))
+                    return time <= 1 ? time + " hour" : time + " hours";
+                }
+
+                if (diff <= (60 * 60 * 24 * 31)) {
+
+                    time = Math.round(diff / (60 * 60 * 24))
+                    return time <= 1 ? time + " day" : time + " days";
+                }
+
+
+                if (diff <= (60 * 60 * 24 * 31 * 12)) {
+                    time = Math.round(diff / (60 * 60 * 24 * 31))
+                    return time <= 1 ? time + " month" : time + " months";
+                } else {
+                    time = Math.round(diff / (60 * 60 * 24 * 31 * 12))
+                    return time <= 1 ? time + " year" : time + " years";
+                }
+
+
+            }
+
+        },
+        delimiters: ["[[", "]]"],
+        template: `<span>[[transformDate(date)]] ago</span>`
+
+    })
+</script>

@@ -1,0 +1,119 @@
+
+{% include "partials/comment.twig" %}
+<script>
+    Vue.component('comments', {
+        props: ["file"],
+        data: function () {
+            return {
+                comment: "",
+                comments: false,
+                process: false,
+                empty: false
+
+            }
+        }
+        ,
+        methods: {
+
+            addComment: function () {
+                if (this.process) {
+                    return;
+                }
+                this.process = true;
+                path =   "/comment/post"
+                fd = new FormData();
+                fd.append("comment", this.comment);
+                fd.append("csrf_token", document.getElementById("csrf").value)
+                fd.append("file_id",this.file.id)
+                axios.post(path, fd, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }).then(r => {
+                    console.log(r.data)
+
+                    if (Array.isArray(r.data)) {
+
+                        if (this.comments == false) this.comments = r.data;
+                        else this.comments = r.data.concat(this.comments);
+                        console.log(this.comments)
+
+                    }
+                    this.process = false;
+                })
+            },
+            getComments: function () {
+
+                if (this.process) {
+                    return;
+                }
+                this.process = true;
+                let path = window.location.href + "/comments?amount=" + (Number.isInteger(this.comments.length) ? this.comments.length : 0);
+
+                axios.get(path, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }).then(r => {
+                    console.log(r.data)
+                    if (r.data == false) {
+                        this.empty = true;
+                    }
+                    if (this.comments) {
+                        this.comments = this.comments.concat(r.data)
+
+                    } else {
+                        this.comments = r.data
+                    }
+                    this.process = false;
+
+                })
+            }
+        },
+        mounted: function () {
+
+
+            document.addEventListener("scroll", () => {
+
+                if (document.body.scrollHeight - window.innerHeight - 100 <= Math.ceil(window.scrollY)) {
+                    if (!this.empty) this.getComments()
+                }
+            })
+        },
+        delimiters: ["[[", "]]"],
+        template: `    <div id="comments" class="comments">
+        <div class="comments__area">
+            {% if auth.getAuthUser %}
+                <input   required v-model="comment" class="comments__area-input" name="comment">
+                <button @click="addComment"
+                        :class='{"comments__area-btn btn":process==false, "comments__area-btn_disabled":process ||comment.length<1}'
+                        :disabled = "comment.length<1"
+                        >
+                    Submit
+                </button>
+            {% else %}
+                <input required v-model="comment" class="comments__area-input_disabled" name="comment"
+                       placeholder="unregistered users cannot send comments" disabled="disabled">
+                <button @click="addComment" class="btn_disabled" disabled="disabled"> Submit</button>
+            {% endif %}
+        </div>
+        <transition-group name="comments-list" tag="div">
+            <comment v-if="comments" v-for="(comment,i) in comments"
+                     v-bind:key="comment[0].id"
+                     v-bind:comment="comment[0]"
+                     v-bind:user="{name:comment.name ,avatarPath:comment.avatarPath}" class="comment">
+
+
+            </comment>
+
+        </transition-group>
+        <div v-if="process && !empty" class="center"><img class="comments__loading" src="/images/loading.gif" alt="">
+        </div>
+        <div v-if="empty" class="center"><p>No more comments!</p></div>
+        {% include "partials/csrf.twig" %}
+
+
+    </div>
+        `
+    })
+</script>

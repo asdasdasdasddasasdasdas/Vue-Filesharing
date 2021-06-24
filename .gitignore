@@ -1,0 +1,5 @@
+vendor
+.idea
+.git
+public/uploads
+!public.uploads/avatars

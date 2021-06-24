@@ -1,0 +1,62 @@
+{% extends "layouts/base.twig" %}
+{% block content %}
+    <div id="profile-view" class="profile-view">
+
+
+        <div id="profile" class="profile-view__left">
+            <div class="profile-view__left-content">
+                <div v-if="user" class="profile-view__avatar-preview">
+                    <img v-if="user.avatarPath==null" src="/images/unknown-person-icon-4.png" alt="" class="profile-view__avatar-unknown">
+
+                    <div v-if="user" class="profile-view__avatar-content">
+                        <img :src="[['/'+user.avatarPath]]" class="profile-view__avatar" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="profile-view__right">
+            <div class="profile-view__header">
+                <h3 class="profile-view__header-text center">profile</h3>
+            </div>
+            <div v-if="user" class="profile-view__right-content">
+
+                <div v-if="user" class="profile-view__field">
+                    <span class="profile-view__name-text"> Name : [[user.name]]</span>
+                </div>
+                <div v-if="user" class="profile-view__field">
+                    <span class="profile-view__created-text">Created at : [[new Date(user.created.date).toLocaleDateString()]] </span>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block script%}
+    <script>
+        let profile = new Vue({
+            el : "#profile-view",
+            data:{
+                user:false
+            },
+            mounted: function () {
+
+                path = window.location.pathname.split("/")[2]+"/getUser";
+                axios.get(path, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+
+                }).then(r => {
+
+
+                    this.user = r.data;
+
+
+                })
+            },
+            delimiters:["[[","]]"]
+        })
+    </script>
+{% endblock %}

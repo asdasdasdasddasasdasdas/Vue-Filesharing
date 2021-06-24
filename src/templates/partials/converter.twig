@@ -1,0 +1,24 @@
+<script>
+    Vue.component('converter', {
+        props: ['size'],
+        data: function () {
+            return {
+                types: ["B", "KB", "MB", "GB"],
+            }
+        },
+       methods: {
+           convert:function(num) {
+
+               let i = 0;
+               while (num > 1024) {
+                   num = num / 1024;
+                   i++;
+               }
+               return num = num.toFixed(0) + this.types[i];
+           }
+       }
+        , delimiters: ["[[", "]]"],
+        template: `<span>[[convert(size)]]</span>`
+
+    })
+</script>

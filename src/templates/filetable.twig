@@ -1,0 +1,160 @@
+{% extends "layouts/base.twig" %}
+
+{% block content %}
+
+
+    <div id="file-table" class="file-table">
+        <div class="file-table__files">
+            <div class="file-table__files-header">
+                <div class="file-table__td">Image</div>
+                <div class="file-table__td">Name</div>
+                <div class="file-table__td">Size</div>
+                <div class="file-table__td">Date</div>
+            </div>
+
+
+            <div class="file-table__show">
+                <div v-if="process" class="file-overlay"><div class="center"><img class="file-overlay__loading" src="/images/loading.gif" alt=""></div></div>
+                <tfile v-bind:key="index"
+                       v-bind:file="file"
+                       v-if="files" v-for="(file,index) in files">
+
+                </tfile>
+
+            </div>
+            <div class="center">
+                <pagination v-on:switchPage="switchpage" v-bind:pages="c"></pagination>
+
+            </div>
+
+        </div>
+        <div class="file-table__query">
+            <div class="file-table__query-header">
+                <h1>Search</h1>
+            </div>
+
+            <div class="file-table__query-search">
+                <label for="">
+                    <input class="file-table__query-input" name="search" v-model="search" type="text"
+                           placeholder="Search here">
+                </label>
+            </div>
+
+            <div class="file-table__query-types">
+                <div class="file-table__query-field">
+                    <label for="" class="file-table__query-label">
+                        Images
+                    </label>
+                    <input class="file-table__query-radio" @click="checked" v-model="type" name="type" value="image"
+                           type="radio">
+
+                </div>
+                <div class="file-table__query-field">
+                    <label class="file-table__query-label">
+                        Videofiles
+                    </label>
+                    <input class="file-table__query-radio" @click="checked" v-model="type" name="type" value="video"
+                           type="radio">
+
+                </div>
+                <div class="file-table__query-field">
+                    <label class="file-table__query-label">
+                        Audiofiles
+                    </label>
+                    <input class="file-table__query-radio" @click="checked" v-model="type" name="type" value="audio"
+                           type="radio">
+
+                </div>
+                <div class="file-table__query-field">
+                    <label class="file-table__query-label">
+                        Documents
+                    </label>
+                    <input class="file-table__query-radio" @click="checked" v-model="type" name="type" value="text"
+                           type="radio">
+
+                </div>
+
+            </div>
+            <div class="center">
+                <div @click="searchFiles" class="file-table__query-btn btn">Submit</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {% include "partials/pagination.twig" %}
+    {% include "partials/tfile.twig" %}
+
+    <script>
+        let table = new Vue({
+            el: "#file-table",
+            data: {
+                search: "",
+                type: "",
+                page: "",
+                files: [],
+                data: {},
+                process:false
+                ,
+                c: 0,
+            },
+            methods: {
+                getFiles: function () {
+                    if (this.process){
+                        return
+                    }
+                    this.process=true;
+                    let query = new URLSearchParams(this.data);
+                    query = query.toString() ? "?" + query.toString() : "";
+                    axios.get("/files/search" + query, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    }).then(r => {
+                        console.log(r.data)
+                        this.files = 0;
+
+                        this.files = r.data.files;
+                        this.c = r.data.pages;
+                        this.process=false;
+
+                    }).catch(r => {
+                        console.log(r)
+                    })
+
+                }
+                , searchFiles: function () {
+                    this.data.search = this.search;
+                    this.data.type = this.type;
+                    this.data.page = 1;
+                    this.page=1;
+                    console.log(this.data)
+                    this.getFiles();
+                }
+                ,
+                switchpage(page) {
+                    this.page = page;
+                    this.page ? this.data.page = this.page : null;
+                    this.getFiles();
+                }
+                ,
+                checked: function (e) {
+
+                    if (this.type == e.target.value) {
+                        e.target.checked = false;
+                        this.type = "";
+                    }
+                }
+
+
+            },
+            mounted: function () {
+
+                this.getFiles()
+
+            }
+            , delimiters: ["[[", "]]"]
+        })
+    </script>
+{% endblock %}

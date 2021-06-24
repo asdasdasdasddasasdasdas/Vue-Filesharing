@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="http://test2.ru/css/main.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+
+<div id="loader" :class="{'loader': progress == null, 'loader--active':progress}"><span :style="{width:progress+'%'}"
+                                                                                        id="loader-progress"
+                                                                                        class="loader-progress"> </span>
+</div>
+<header id="header" class="header">
+
+    <nav class="header__navbar">
+        <a href="" class="header__link-logo"><img class="header__link-img"
+                                                  src="/bear-head-mascot-logo-black-and-white_27088-409.jpg" alt=""></a>
+
+        <div :class="{'header__inner':(button == false), 'header__inner_active': button}">
+
+            <ul class="header__right">
+
+                <a href="{{ url_for("home") }}" class="header__link">Home</a>
+                <a href="{{ url_for("files") }}" class="header__link">Files</a>
+                <a href="{{ url_for("upload") }}" class="header__link">Upload</a>
+            </ul>
+            <ul class="header__left">
+
+                {% if auth.getAuthUser() == null  %}
+                    <a href="{{ url_for("login") }}" class="header__link">Login</a>
+
+
+                    <a href="{{ url_for("signup") }}" class="header__link">Sign Up</a>
+                {% else %}
+                    <div class="header__link-wrapper">
+                        <ul :class="{'header__dropdown':arrow==false, 'header__dropdown_active':arrow}">
+                            <li class="header__dropdown-item"><a class="header__dropdown-link" href="{{ url_for("logout") }}">logout</a></li>
+                        </ul>
+                        <a href="/profile" class="header__link">{{ auth.getAuthUser.login() }} </a>
+                        <span v-on:click="arrow = !arrow"
+                              :class="{'header__link-arrow':arrow==false, 'header__link-arrow_active':arrow}"></span>
+
+                    </div>
+                {% endif %}
+
+            </ul>
+
+        </div>
+        <div v-on:click="button = !button" class="header__toggle">
+        <span :class="{'header__toggle-span':(button == false), 'header__toggle-span_active': button}">
+        </span>
+        </div>
+    </nav>
+
+</header>
+<div class="wrapper">
+
+    {% block content %} {% endblock %}
+</div>
+
+{% include "partials/loader.twig" %}
+
+
+<script type="text/javascript">
+
+    var app = new Vue({
+        el: '#header',
+        data: {
+            arrow: false,
+            loader: LOADER,
+            button: false,
+        },
+        delimiters: ["[[", "]]"]
+
+    })
+
+
+</script>
+{% block script %}
+{% endblock %}
+</body>
+
+</html>

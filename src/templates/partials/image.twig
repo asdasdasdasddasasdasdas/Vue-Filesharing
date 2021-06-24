@@ -1,0 +1,60 @@
+<script>
+    Vue.component('fileImage', {
+        props: ['file'],
+        data: function () {
+            return {
+                image: "",
+                images: {
+                    "video": "images/video.png",
+                    "application": "images/application.png",
+                    "audio": "images/audio.png",
+                    "text": "images/text.png",
+                    "unknown": "images/unknown.png"
+                }
+            }
+        },
+        methods: {
+           setImage: function (file) {
+
+                let t = file.type.split("/")[0];
+
+                let reader = new FileReader();
+
+                if (t == "image" && file.hasOwnProperty("filepath")) {
+
+                    this.image = "/"+file.filepath
+                    return;
+                }
+                if (t == "image"){
+                    reader.onload = function () {
+
+                        this.image = reader.result;
+
+                    }.bind(this)
+                    reader.readAsDataURL(this.file);
+                    return;
+
+                }
+                if (this.images.hasOwnProperty(t)) {
+
+                    this.image = "/"+this.images[t];
+                    return;
+                    ;
+                } else {
+                    this.image = "/"+this.images["unknown"];
+
+                }
+            },
+            getImage(){
+                this.setImage(this.file);
+                return this.image;
+            }
+        }
+        , delimiters: ["[[", "]]"]
+        ,
+        template: `
+<img  class="file-image" :src="[[getImage()]]" alt="">`
+
+
+    })
+</script>

@@ -1,0 +1,189 @@
+{% extends "layouts/base.twig" %}
+
+{% block content %}
+    <div id="upload-area"
+         :class="{'upload-area_drag':(active && !uploading), 'upload-area':((active == false))}"
+         id="uploadarea"
+         @dragenter="dragEnter"
+         @dragleave="dragLeave"
+         @dragover.prevent
+         @drop="onDrop"
+    >
+
+        <div id="upload-menu" class="upload-menu"
+             @dragenter="dragEnter"
+             @dragover.prevent
+             @drop="onDrop"
+        >
+            <div class="upload-menu__title">
+                <p>Files</p>
+            </div>
+            <div class="upload-menu__content">
+                <div class="upload-menu__left">
+
+                    <transition-group class="upload-menu__inner" tag="div" name="files-menu">
+
+
+                        <file v-if="fl != 0" v-on:delete=remove class="list-complete-item" v-for="(fl, index) in files"
+                              v-bind:key="index"
+                              v-bind:file="fl"
+                              v-bind:i="index"
+                        ></file>
+
+                    </transition-group>
+                </div>
+                <div class="upload-menu__right">
+                    <div class="center">
+                        <div @click="upload"
+                             :class="{'upload-menu__upload-button':uploading==false, 'upload-menu__upload-button--disabled':uploading || !files.length}">
+                            Upload
+                        </div>
+                    </div>
+
+                    <div class="center">
+                        <label class="upload-menu__choose-button"
+                               :class="{'upload-menu__choose-button':uploading==false, 'upload-menu__choose-button--disabled':uploading}">
+                            <input class="upload-menu__choose-input" type="file" id="file"
+                                   :disabled="uploading"
+                                   v-on:change="addFiles"
+                                   aria-label="File browser example" multiple>
+                            Choose file
+                        </label>
+                    </div>
+                    <div class="upload-menu__errors">
+
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        {% include "partials/csrf.twig" %}
+    </div>
+{% endblock %}
+{% block script %}
+
+    {% include "partials/file.twig" %}
+    <script>
+
+        var area = new Vue({
+                el: "#upload-area",
+                data: {
+                    i: 0,
+                    active: false,
+                    files: {},
+                    errors: 0,
+                    intervalid1: null,
+                    uploading: false,
+                    loader: LOADER,
+
+
+                },
+
+                methods: {
+                    upload: function () {
+                        if (this.uploading && this.files.length != undefined) {
+                            return;
+                        }
+
+                        this.uploading = true;
+                        let fd = new FormData;
+                        this.files.forEach((file) => fd.append('files[]', file));
+                        fd.append("csrf_token", document.getElementById("csrf").value);
+
+                        axios.post('/upload/post', fd, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+
+                            }
+                                ,
+                                onUploadProgress: function (e) {
+                                    var progress = Math.min(Math.round(e.loaded * 100 / e.total))
+                                    this.loader.progress = progress;
+
+
+                                }.bind(this)
+                            }
+                        ).then(
+                            (response) => {
+                                this.loader.progress = 0
+                                if (response.data.hasOwnProperty("errors")) {
+
+                                    this.errors = response.data['errors']
+                                    this.uploading = false;
+                                    this.files = [];
+                                } else {
+                                    this.intervalid1 = (setInterval(() => {
+                                        if (this.files.length > 0) {
+                                            this.files.splice(this.files.length - 1, 1)
+                                        } else {
+
+                                            clearInterval(this.intervalid1)
+                                            this.uploading = false;
+                                        }
+                                    }, 300))
+
+                                }
+
+                            }
+                        )
+
+                    },
+                    addFiles: function (e) {
+
+                        let uploaded_files = Array.from(e.target.files)
+                        if (this.files == 0) {
+                            this.files = Array.from(uploaded_files);
+                        } else {
+                            this.files = Array.from(this.files).concat(Array.from(uploaded_files));
+
+                        }
+                    }
+                    ,
+                    remove: function (i) {
+
+
+                        this.files.splice(i, 1, 0)
+
+                    }
+                    ,
+                    dragEnter: function (e) {
+                        e.preventDefault();
+                        this.active = true;
+                    },
+                    dragLeave: function (e) {
+                        e.preventDefault();
+                        this.active = false;
+                    },
+                    onDrop: function (e) {
+                        if (this.uploading) {
+                            return;
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.active = false;
+                        let uploaded_files = e.dataTransfer.files;
+
+                        if (this.files == 0) {
+                            this.files = Array.from(uploaded_files);
+                        } else {
+                            this.files = Array.from(this.files).concat(Array.from(uploaded_files));
+                            
+                        }
+
+                    }
+                },
+
+
+                delimiters: ["[[", "]]"]
+            })
+        ;
+
+
+    </script>
+{% endblock %}
+
+
+
