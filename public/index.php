@@ -14,7 +14,7 @@ function dd($t = ' ')
     die();
 }
 
-function d($t = 'aaa ')
+function d($t = ' ')
 {
     if (isset($t)) {
         echo "<pre>";
